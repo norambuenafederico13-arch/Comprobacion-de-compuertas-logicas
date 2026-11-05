@@ -8,4 +8,4 @@
 
 #Codigo de instalacion en la terminal##
 
-pip install customtkinter pyserial
+-pip install customtkinter pyserial
