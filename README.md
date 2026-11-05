@@ -4,7 +4,7 @@ Este sistema se basa en la comprobación de las compuertas lógicas de un circui
 
 ## Importante
 
->  Para que la totalidad del sistema funcione correctamente, es necesario compilar y subir primero el código terminado en `.ino` al ESP32-S3 para habilitar el puerto usb nativo, luego de esto, se podrá ejecutar el script de python (`.py`) en la computadora para establecer la comunicación serial.
+>  Para que la totalidad del sistema funcione correctamente, es necesario compilar y subir primero el código terminado en `.ino` al ESP32 para habilitar el puerto usb nativo, luego de esto, se podrá ejecutar el script de python (`.py`) en la computadora para establecer la comunicación serial.
 
 ## Requisitos de software
 
