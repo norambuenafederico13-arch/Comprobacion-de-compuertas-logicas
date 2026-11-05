@@ -8,7 +8,7 @@ Este sistema se basa en la comprobación de las compuertas lógicas de un circui
 
 ## Requisitos de software
 
-Para el funcionamiento básico del programa es necesario contar con Visual Studio Code y las siguientes librerías de Python:
+Para el funcionamiento básico del programa es necesario contar con Visual Studio Code y las siguientes librerías de python instaladas:
 * PySerial
 * CustomTkinter
 
