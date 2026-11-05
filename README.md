@@ -1,11 +1,13 @@
-#Comprobador Automatizado de compuertas logicas con ESP32-S3#
+# Comprobador automatizado de compuertas logicas con ESP32-S3
 
-//Para el funcionamiento basico del programa es necesario requerir del software VS Studio Code y las siguientes librerias//
+Este sistema se basa en la comprobacion de las compuertas logicas de un circuito integrado (como las familias CMOS serie 4000 y TTL serie 74) de manera individual.
 
--PySerial
+## Requisitos de software
+Para el funcionamiento básico del programa es necesario contar con Visual Studio Code y las siguientes librerías de python:
+* PySerial
+* CustomTkinter
 
--CustomTkinter
-
-#Codigo de instalacion en la terminal##
-
--pip install customtkinter pyserial
+## Código de instalación en la terminal
+```bash
+pip install customtkinter pyserial
+```
