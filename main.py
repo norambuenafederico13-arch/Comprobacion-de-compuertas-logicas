@@ -57,6 +57,7 @@ class AppCompuertas(ctk.CTk):
             command=self.enviar_prueba
         )
         self.btn_probar.pack(pady=12)
+        
         self.lbl_resultado_general = ctk.CTkLabel(self, text="Esperando inicio de prueba...", font=("Arial", 16, "bold"), text_color="gray")
         self.lbl_resultado_general.pack(pady=10)
 
@@ -106,7 +107,7 @@ class AppCompuertas(ctk.CTk):
     def actualizar_combo_puertos(self):
         nuevos_puertos = self.listar_puertos()
         self.combo_puertos.configure(values=nuevos_puertos)
-        self.combo_puertos.set(nuevos_puertos)
+        self.combo_puertos.set(nuevos_puertos[0])
 
     def toggle_conexion(self):
         if self.serial_esp32 is None:
@@ -136,58 +137,73 @@ class AppCompuertas(ctk.CTk):
         if not self.serial_esp32:
             return
 
+        self.btn_probar.configure(state="disabled")
+        self.lbl_resultado_general.configure(text="Evaluando integrado...", text_color="orange")
+
         seleccion = self.ic_seleccionado.get()
-        comando = 'A'
-        if "4071" in seleccion or "OR" in seleccion: 
-            comando = 'O'
-        elif "4069" in seleccion or "NOT" in seleccion: 
-            comando = 'N'
+        if "AND" in seleccion:
+            comando = b'A'
+        elif "OR" in seleccion:
+            comando = b'O'
+        elif "NOT" in seleccion:
+            comando = b'N'
+        else:
+            self.lbl_resultado_general.configure(text="Error: Selección no válida", text_color="red")
+            self.btn_probar.configure(state="normal")
+            return
 
+        # Uso de hilos para mantener la GUI fluida
+        hilo = threading.Thread(target=self._procedimiento_serial, args=(comando,))
+        hilo.daemon = True
+        hilo.start()
+
+    def _procedimiento_serial(self, comando):
+        """Ejecuta el envío de datos y lectura en segundo plano."""
         try:
-            self.serial_esp32.write_timeout = 1 
-            
             self.serial_esp32.reset_input_buffer()
-            self.serial_esp32.write(comando.encode())
+            self.serial_esp32.write(comando)
             
-            threading.Thread(target=self.escuchar_respuesta, daemon=True).start()
-        except Exception:
-            self.lbl_resultado_general.configure(text="❌ Puerto no disponible o desconectado", text_color="#e74c3c")
-            self.toggle_conexion()
-
-    def escuchar_respuesta(self):
-        try:
             linea = self.serial_esp32.readline().decode('utf-8').strip()
             
             if linea.startswith("STATUS:"):
-                datos = linea.split(",")
-                estado_global = datos[0].split(":")[1]
-
-                datos_compuertas = [d for d in datos[1:] if d]
-                self.after(0, self.actualizar_interfaz, estado_global, datos_compuertas)
-        except Exception:
-            self.after(0, lambda: self.lbl_resultado_general.configure(text="Fallo de lectura en puerto serial", text_color="#e74c3c"))
-
-    def actualizar_interfaz(self, estado_global, datos_compuertas):
-        if estado_global == "GOOD":
-            self.lbl_resultado_general.configure(text="✔ INTEGRADO EN PERFECTO ESTADO ✔", text_color="#2ecc71")
-        else:
-            self.lbl_resultado_general.configure(text="❌ INTEGRADO DEFECTUOSO O DAÑADO ❌", text_color="#e74c3c")
-
-        for i, dato in enumerate(datos_compuertas):
-            if i >= len(self.cuadros_compuertas): break
-            if ":" not in dato: continue
-            
-            partes = dato.split(":")
-            if len(partes) < 2: continue
-            
-            estado_compuerta = partes[1]
-
-            if estado_compuerta == "OK":
-                self.cuadros_compuertas[i].configure(border_color="#2ecc71")
-                self.labels_compuertas[i].configure(text=f"Compuerta {i+1}\n✔ OPERATIVA", text_color="#2ecc71")
+                self.after(0, self._actualizar_interfaz_exito, linea)
             else:
-                self.cuadros_compuertas[i].configure(border_color="#e74c3c")
-                self.labels_compuertas[i].configure(text=f"Compuerta {i+1}\n❌ FALLA DETECTADA", text_color="#e74c3c")
+                self.after(0, self._actualizar_interfaz_error, "Respuesta inesperada del hardware")
+        except Exception as e:
+            self.after(0, self._actualizar_interfaz_error, f"Error de comunicación: {str(e)}")
+
+    def _actualizar_interfaz_exito(self, datos_raw):
+        """Parsea la respuesta del firmware y actualiza los recuadros gráficos."""
+        try:
+            partes = datos_raw.replace("STATUS:", "").split(",")
+            estado_general = partes[0]
+            
+            if estado_general == "GOOD":
+                self.lbl_resultado_general.configure(text="✨ INTEGRADO EN PERFECTO ESTADO (GOOD) ✨", text_color="#2ecc71")
+            else:
+                self.lbl_resultado_general.configure(text="❌ INTEGRADO DEFECTUOSO O FALLIDO (BAD) ❌", text_color="#e74c3c")
+
+            for parte in partes[1:]:
+                if ":" in parte:
+                    compuerta_str, resultado = parte.split(":")
+                    idx = int(compuerta_str.replace("C", "")) - 1
+                    
+                    if idx < len(self.labels_compuertas):
+                        if resultado == "OK":
+                            self.cuadros_compuertas[idx].configure(border_color="#2ecc71")
+                            self.labels_compuertas[idx].configure(text=f"Compuerta {idx+1}\n🟢 OK", text_color="#2ecc71")
+                        else:
+                            self.cuadros_compuertas[idx].configure(border_color="#e74c3c")
+                            self.labels_compuertas[idx].configure(text=f"Compuerta {idx+1}\n🔴 FAIL", text_color="#e74c3c")
+        except Exception:
+            self._actualizar_interfaz_error("Error de formato al procesar datos")
+        finally:
+            self.btn_probar.configure(state="normal")
+
+    def _actualizar_interfaz_error(self, mensaje):
+        """Muestra excepciones o desconexiones físicas imprevistas."""
+        self.lbl_resultado_general.configure(text=mensaje, text_color="#e74c3c")
+        self.btn_probar.configure(state="normal")
 
 if __name__ == "__main__":
     app = AppCompuertas()
