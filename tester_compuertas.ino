@@ -1,4 +1,4 @@
-onst int entradasA[] = {1, 4, 8, 11};  
+const int entradasA[] = {1, 4, 8, 11};  
 const int entradasB[] = {2, 5, 9, 12};  
 const int salidasY[]  = {3, 6, 7, 10};  
 
@@ -40,7 +40,7 @@ void probarIC_CuatroCompuertas(char tipo) {
       for (int b = 0; b <= 1; b++) {
         digitalWrite(entradasA[c], a);
         digitalWrite(entradasB[c], b);
-        delayMicroseconds(50); 
+        delayMicroseconds(50); // Tiempo de estabilización de señal
         
         int leido = digitalRead(salidasY[c]);
         int esperado = 0;
@@ -95,5 +95,6 @@ void probarIC_SeisCompuertasNOT() {
     }
     resultados += "C" + String(c+1) + ":" + String(compuertaOK ? "OK" : "FAIL") + ",";
   }
+
   Serial.println("STATUS:" + String(integradoFunciona ? "GOOD" : "BAD") + "," + resultados);
 }
