@@ -1,6 +1,6 @@
-const int entradasA[] = {1, 4, 8, 11};  
-const int entradasB[] = {2, 5, 9, 12};  
-const int salidasY[]  = {3, 6, 7, 10};  
+const int entradasA[] = {4, 7, 17, 20};  
+const int entradasB[] = {5, 15, 18, 21};
+const int salidasQ[]  = {6, 16, 19, 35};
 
 void setup() {
   Serial.begin(115200);
